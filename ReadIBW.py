@@ -4,8 +4,8 @@
 # ALGORITHM:
 # Parsing proper to version 2, 3, or version 5 (see Technical notes TN003.ifn:
 # http://mirror.optus.net.au/pub/wavemetrics/IgorPro/Technical_Notes/) and data
-# type 2 or 4 (non complex, single or double precision vector, real values). 
-# 
+# type 2 or 4 (non complex, single or double precision vector, real values).
+#
 # AUTHORS:
 # Python port: A. Seeholzer October 2008
 #
@@ -14,16 +14,16 @@
 # COMMENTS:
 # Only tested for version 2 igor files for now, testing for 3 and 5 remains to be done.
 # More header data could be passed back if wished. For significace of ignored bytes see
-# the technical notes linked above. 
+# the technical notes linked above.
 
 import struct
-from time import clock
+#from time import clock
 import numpy
 
 def flatten(tup):
     out = ''
     for ch in tup:
-        out += ch
+        out += str(ch)
     return out
 
 def read(filename):
@@ -32,15 +32,15 @@ def read(filename):
     Reads Igor's (Wavemetric) binary wave format, .ibw, files.
 
     INPUT
-    filename: filename with path in string, e.g. "usr/home/example.ibw" 
+    filename: filename with path in string, e.g. "usr/home/example.ibw"
 
     OUTPUT
     data: vector (single precision) of values of the wave containted in the file
     dUnits: string: saved values of the units of data (char).
     '''
-    
+
     f = open(filename,"rb")
-    
+
     ####################### ORDERING
     # machine format for IEEE floating point with big-endian
     # byte ordering
@@ -52,12 +52,12 @@ def read(filename):
         format = '>'
     else:
         format = '<'
-    
+
     #######################  CHECK VERSION
-    
+
     f.seek(0)
     version = struct.unpack(format+'h',f.read(2))[0]
-    
+
     #######################  READ DATA AND ACCOMPANYING INFO
     if version == 2 or version==3:
 
@@ -78,7 +78,7 @@ def read(filename):
         else:
             assert False, "Wave is of type '%i', not supported" % dtype
         dtype = dtype.newbyteorder(format)
-        
+
         ignore = f.read(4) # 1 uint32
         bname = flatten(struct.unpack(format+'20c',f.read(20)))
         ignore = f.read(4) # 2 int16
@@ -99,9 +99,10 @@ def read(filename):
         ignore = f.read(16) # 16 int8
         modDate = struct.unpack(format+'I',f.read(4))[0]
         ignore = f.read(4) # 1 uint32
-        # Numpy algorithm works a lot faster than struct.unpack 
-        wdata = numpy.fromfile(f,dtype)
-        
+        # Numpy algorithm works a lot faster than struct.unpack
+        #wdata = numpy.fromfile(f,dtype)
+        wdata = numpy.fromfile(f,dtype,npnts)
+
     elif version == 5:
         # pre header
         checksum = struct.unpack(format+'H',f.read(2))[0] # Checksum over this header and the wave header.
@@ -129,7 +130,7 @@ def read(filename):
         else:
             assert False, "Wave is of type '%i', not supported" % dtype
         dtype = dtype.newbyteorder(format)
-        
+
         ignore = f.read(2) # 1 int16
         ignore = f.read(6) # 6 schar, SCHAR = SIGNED CHAR?         ignore = fread(fid,6,'schar'); #
         ignore = f.read(2) # 1 int16
@@ -152,12 +153,13 @@ def read(filename):
         ignore = f.read(4) # 2 int16
         ignore = f.read(4) # 1 int32
         ignore = f.read(8) # 2 int32
-        
-        wdata = numpy.fromfile(f,dtype)
+
+        #wdata = numpy.fromfile(f,dtype)
+        wdata = numpy.fromfile(f,dtype,npnts)
     else:
         assert False, "Fileversion is of type '%i', not supported" % dtype
         wdata = []
-        
+
     f.close()
-   
+
     return wdata
